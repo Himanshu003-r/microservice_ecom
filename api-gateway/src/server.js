@@ -9,6 +9,7 @@ import { RedisStore } from "rate-limit-redis";
 import proxy from "express-http-proxy";
 import ApiError from './errors/customAPIError.js';
 import errorHandler from './middleware/errorHandler.js'
+import authHandler from './middleware/authMiddleware.js'
 dotenv.config()
 
 const app = express()
@@ -75,9 +76,30 @@ app.use(
   })
 );
 
+app.use(
+  authHandler,
+  "/v1/order",
+  proxy(process.env.ORDER_SERVICE, {
+    ...proxyOptions,
+    proxyReqOptDecorator: (proxyReqOpts,srcReq) => {
+      proxyReqOpts.headers["Content-Type"] = "application/json";
+      proxyReqOpts.headers["x-user-id"] = srcReq.user.userId
+      proxyReqOpts.headers["x-user-role"] = srcReq.user.role
+      return proxyReqOpts
+    },
+      userResDecorator: (proxyRes, proxyResData) => {
+      logger.info(
+        `Response received from Identity service: ${proxyRes.statusCode}`
+      );
+      return proxyResData;
+    },
+  })
+)
+
 app.use(errorHandler)
 
 app.listen(PORT, ()=> {
     logger.info(`api-gateway running on port ${PORT}`)
     logger.info(`user service running on port ${process.env.USER_SERVICE}`)
+    logger.info(`order service running on port ${process.env.ORDER_SERVICE}`)
 })
