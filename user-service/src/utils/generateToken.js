@@ -5,7 +5,8 @@ import RefreshToken from "../models/RefereshToken.js"
 const generateToken = async(user) => {
     const accessToken = jwt.sign({
         userId: user._id,
-        username: user.username
+        username: user.username,
+        role: user.role
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
