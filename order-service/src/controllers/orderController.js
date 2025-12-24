@@ -1,19 +1,21 @@
 import Order from "../models/Order.js";
 import logger from "../utils/logger.js";
 import ApiError from "../errors/customAPIError.js";
+import checkPermission from "../utils/checkPermission.js";
+
 export const createOrder = async (req, res) => {
-    logger.info('createOrder API endpoint hit')
+  logger.info("createOrder API endpoint hit");
   try {
     const { items: cartItems, tax, shippingFee, shippingAddress } = req.body;
-    
+
     if (!cartItems || cartItems.length < 1) {
-      throw new ApiError(400,"No cart items provided")
+      throw new ApiError(400, "No cart items provided");
     }
     if (!tax || !shippingFee) {
-      throw new ApiError(400,"Please provide tax and shipping fee")
+      throw new ApiError(400, "Please provide tax and shipping fee");
     }
     if (!shippingAddress) {
-      throw new ApiError(400,"Please provide shipping address")
+      throw new ApiError(400, "Please provide shipping address");
     }
 
     let orderItems = [];
@@ -33,12 +35,18 @@ export const createOrder = async (req, res) => {
         const product = productResponse.data.product;
 
         if (!product) {
-          throw new ApiError(404,`Product does not exist with id ${item.productId}`)
+          throw new ApiError(
+            404,
+            `Product does not exist with id ${item.productId}`
+          );
         }
 
         // Check inventory availability
         if (product.inventory < item.amount) {
-          throw new ApiError(400,`Insufficient inventory for ${product.name}. Available: ${product.inventory}`)
+          throw new ApiError(
+            400,
+            `Insufficient inventory for ${product.name}. Available: ${product.inventory}`
+          );
         }
 
         const { name, price, image } = product;
@@ -122,7 +130,7 @@ export const createOrder = async (req, res) => {
       message: "Order created successfully. Processing payment...",
     });
   } catch (error) {
-      logger.error("An error occured while creating an order");
+    logger.error("An error occured while creating an order");
 
     // Handle custom errors
     if (error instanceof ApiError) {
@@ -137,6 +145,149 @@ export const createOrder = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Internal server error",
+    });
+  }
+};
+
+export const getAllOrders = async (req, res) => {
+try {
+    const order = await Order.find({}).sort({ createdAt: -1 });
+    res.status(200).json({ 
+      success: true,
+      order, 
+      count: order.length });
+} catch (error) {
+  logger.error('Error fetching all orders',error)
+  res.status(500).json({
+    success: false,
+      message: 'Failed to fetch orders'
+  })
+}
+};
+
+export const getSingleOrder = async (req,res) => {
+  try {
+    const {id: orderId} = req.params
+    const order = await Order.findById(orderId)
+
+    if (!order){
+      logger.warn('Order does not exist')
+      throw new ApiError(404, 'Order does not exist')
+    }
+ 
+    checkPermission(req.user,order.userId)
+
+    res.status(200).json({
+      success: true,
+      order
+    })
+  } catch (error) {
+        console.error('Error fetching order:', error);
+    
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch order'
+    });
+  }
+}
+
+export const cancelOrder = async (req, res) => {
+  try {
+    const { id: orderId } = req.params;
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      logger.warn('Order not found')
+      throw new ApiError(404,
+        `Order with id ${orderId} does not exist`
+      );
+    }
+
+    // Check permissions
+    checkPermission(req.user, order.userId);
+
+    // Can only cancel pending or confirmed orders
+    if (!['pending', 'confirmed'].includes(order.status)) {
+      throw new ApiError(401,
+        `Cannot cancel order with status: ${order.status}`
+      );
+    }
+
+    // Update order status
+    order.status = 'cancelled';
+    order.cancelledAt = new Date();
+    await order.save();
+
+    // TODO: Publish order.cancelled event to RabbitMQ
+    await rabbitmq.publish('order.cancelled', {
+      orderId: order._id.toString(),
+      userId: order.userId,
+      reason: 'Cancelled by user'
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Order cancelled successfully',
+      order
+    });
+
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+    
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Failed to cancel order'
+    });
+  }
+};
+
+export const getOrderStats = async (req, res) => {
+  try {
+    // Count orders by status
+    const stats = await Order.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          totalAmount: { $sum: '$total' }
+        }
+      }
+    ]);
+
+    // Total orders
+    const totalOrders = await Order.countDocuments();
+
+    // Recent orders (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const recentOrders = await Order.countDocuments({
+      createdAt: { $gte: sevenDaysAgo }
+    });
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        total: totalOrders,
+        recent: recentOrders,
+        byStatus: stats
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching order stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch order statistics'
     });
   }
 };
