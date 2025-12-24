@@ -21,10 +21,9 @@ export const createOrder = async (req, res) => {
     let orderItems = [];
     let subtotal = 0;
 
-    // Validate products by calling Product Service API
     for (const item of cartItems) {
       try {
-        // Call Product Service to get product details
+
         const productResponse = await axios.get(
           `${process.env.PRODUCT_SERVICE_URL}/api/v1/products/${item.productId}`,
           {
@@ -41,7 +40,6 @@ export const createOrder = async (req, res) => {
           );
         }
 
-        // Check inventory availability
         if (product.inventory < item.amount) {
           throw new ApiError(
             400,
@@ -56,7 +54,7 @@ export const createOrder = async (req, res) => {
           name,
           price,
           image,
-          productId: item.productId, // Store as string, not ObjectId
+          productId: item.productId, 
         };
 
         orderItems = [...orderItems, singleOrderItem];
@@ -67,7 +65,7 @@ export const createOrder = async (req, res) => {
             `Product does not exist with id ${item.productId}`
           );
         }
-        // Handle Product Service downtime
+
         if (error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
           throw new CustomErrors.ServiceUnavailableError(
             "Product Service is currently unavailable. Please try again later."
@@ -77,10 +75,8 @@ export const createOrder = async (req, res) => {
       }
     }
 
-    // Calculate total
     const total = tax + shippingFee + subtotal;
 
-    // Create order in database with pending status
     const order = await Order.create({
       orderItems,
       total,
@@ -93,7 +89,6 @@ export const createOrder = async (req, res) => {
       paymentStatus: "pending",
     });
 
-    // Publish order.created event to RabbitMQ
     try {
       await rabbitmq.publish("order.created", {
         orderId: order._id.toString(),
@@ -111,9 +106,6 @@ export const createOrder = async (req, res) => {
       console.log(`Order created event published for order: ${order._id}`);
     } catch (error) {
       console.error("Failed to publish order.created event:", error);
-
-      // You might want to implement a retry mechanism or dead letter queue
-      // For now, we'll let the order exist and handle it via polling/retry logic
     }
     res.status(201).json({
       order: {
@@ -132,7 +124,7 @@ export const createOrder = async (req, res) => {
   } catch (error) {
     logger.error("An error occured while creating an order");
 
-    // Handle custom errors
+
     if (error instanceof ApiError) {
       return res.status(error.statusCode || 400).json({
         success: false,
@@ -140,7 +132,7 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Handle other errors
+
     console.log(error);
     res.status(500).json({
       success: false,
@@ -208,22 +200,18 @@ export const cancelOrder = async (req, res) => {
       );
     }
 
-    // Check permissions
     checkPermission(req.user, order.userId);
 
-    // Can only cancel pending or confirmed orders
     if (!['pending', 'confirmed'].includes(order.status)) {
       throw new ApiError(401,
         `Cannot cancel order with status: ${order.status}`
       );
     }
 
-    // Update order status
     order.status = 'cancelled';
     order.cancelledAt = new Date();
     await order.save();
 
-    // TODO: Publish order.cancelled event to RabbitMQ
     await rabbitmq.publish('order.cancelled', {
       orderId: order._id.toString(),
       userId: order.userId,
@@ -252,7 +240,7 @@ export const cancelOrder = async (req, res) => {
 
 export const getOrderStats = async (req, res) => {
   try {
-    // Count orders by status
+
     const stats = await Order.aggregate([
       {
         $group: {
@@ -263,10 +251,8 @@ export const getOrderStats = async (req, res) => {
       }
     ]);
 
-    // Total orders
     const totalOrders = await Order.countDocuments();
-
-    // Recent orders (last 7 days)
+    
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
