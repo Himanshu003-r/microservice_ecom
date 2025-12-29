@@ -54,10 +54,12 @@ const OrderSchema = new mongoose.Schema(
       // index: true,
     },
 
-    // Payment reference
-    paymentId: {
-      type: String, // Reference to Payment Service's payment record
-    },
+    // Payment fields
+    paymentId: String,
+    paymentIntentId: String,
+    clientSecret: String,
+    transactionId: String,
+    
     paymentStatus: {
       type: String,
       enum: ["pending", "completed", "failed", "refunded"],
@@ -73,9 +75,19 @@ const OrderSchema = new mongoose.Schema(
       country: String,
     },
 
-    // Tracking
-    trackingNumber: String,
-    carrier: String,
+    // // Tracking
+    // trackingNumber: String,
+    // carrier: String,
+
+    // Refund fields (NEW!)
+    refundId: String,
+    refundAmount: Number,
+    refundReason: String,
+    refundedAt: Date,
+
+    // Failure fields
+    failureReason: String,
+    failureCode: String,
 
     // Timestamps for order lifecycle
     confirmedAt: Date,
