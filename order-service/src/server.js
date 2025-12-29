@@ -9,7 +9,7 @@ import orderRoute from "./routes/orderRoute.js";
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import { rateLimit } from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
-import { connect } from "./utils/rabbit.js";
+import { connect } from "./utils/rabbitmq.js";
 import Redis from "ioredis";
 import ApiError from "./errors/customAPIError.js";
 import setUpPaymentListener from "./event/paymentListener.js";
