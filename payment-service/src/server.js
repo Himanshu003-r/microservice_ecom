@@ -6,6 +6,7 @@ import errorHandler from "./middleware/errorHandler.js";
 import helmet from "helmet";
 import cors from "cors";
 // import orderRoute from "./routes/paymentRoute.js";
+import webhookRoutes from './routes/webhookRoutes.js'
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import { rateLimit } from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
@@ -22,6 +23,7 @@ connectDB();
 
 app.use(helmet());
 app.use(cors());
+app.use('/api/v1/webhooks', webhookRoutes);
 app.use(express.json());
 app.use(express.urlencoded());
 app.use((req, res, next) => {
@@ -73,7 +75,6 @@ const sensitiveEndpoints = rateLimit({
 
 // app.use("/api/order", orderRoute);
 
-// Health check
 app.get("/health", (req, res) => {
   res.json({
     status: "healthy",
@@ -98,6 +99,13 @@ async function startServer() {
     logger.error("Failed to start payment service", error);
   }
 }
+
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  await rabbitmq.close();
+  await mongoose.connection.close();
+  process.exit(0);
+});
 
 startServer();
 
