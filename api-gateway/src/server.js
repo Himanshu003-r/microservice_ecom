@@ -9,7 +9,7 @@ import { RedisStore } from "rate-limit-redis";
 import proxy from "express-http-proxy";
 import ApiError from './errors/customAPIError.js';
 import errorHandler from './middleware/errorHandler.js'
-import authHandler from './middleware/authMiddleware.js'
+import authMiddleware from './middleware/authMiddleware.js'
 dotenv.config()
 
 const app = express()
@@ -77,8 +77,8 @@ app.use(
 );
 
 app.use(
-  authHandler,
   "/v1/order",
+   authMiddleware,
   proxy(process.env.ORDER_SERVICE, {
     ...proxyOptions,
     proxyReqOptDecorator: (proxyReqOpts,srcReq) => {

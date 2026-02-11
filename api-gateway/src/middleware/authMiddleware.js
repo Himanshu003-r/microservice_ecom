@@ -1,7 +1,7 @@
-import ApiError from "../errors/customAPIError"
+import ApiError from "../errors/customAPIError.js"
 import logger from "../utils/logger.js"
 import jwt from 'jsonwebtoken'
-export const auth = async (req,res,next) => {
+const authMiddleware = async (req,res,next) => {
     try {
         const authHeader = req.headers['authorization']
         const token = authHeader || authHeader.split(" ")[1]
@@ -21,3 +21,5 @@ export const auth = async (req,res,next) => {
         })
     }
 }
+
+export default authMiddleware
