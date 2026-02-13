@@ -71,7 +71,7 @@ const OrderSchema = new mongoose.Schema(
       street: String,
       city: String,
       state: String,
-      zipCode: String,
+      pinCode: String,
       country: String,
     },
 
