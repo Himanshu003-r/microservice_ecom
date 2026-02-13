@@ -2,6 +2,7 @@ import Order from "../models/Order.js";
 import logger from "../utils/logger.js";
 import ApiError from "../errors/customAPIError.js";
 import checkPermission from "../utils/checkPermission.js";
+import axios from 'axios'
 
 export const createOrder = async (req, res) => {
   logger.info("createOrder API endpoint hit");
@@ -25,7 +26,7 @@ export const createOrder = async (req, res) => {
       try {
 
         const productResponse = await axios.get(
-          `${process.env.PRODUCT_SERVICE_URL}/api/v1/products/${item.productId}`,
+          `${process.env.PRODUCT_SERVICE_URL}/api/product/${item.productId}`,
           {
             timeout: 5000,
           }
@@ -61,13 +62,15 @@ export const createOrder = async (req, res) => {
         subtotal += item.amount * price;
       } catch (error) {
         if (error.response?.status === 404) {
-          throw new CustomErrors.NotFoundError(
+          throw new ApiError(
+            404,
             `Product does not exist with id ${item.productId}`
           );
         }
 
         if (error.code === "ECONNREFUSED" || error.code === "ETIMEDOUT") {
-          throw new CustomErrors.ServiceUnavailableError(
+          throw new ApiError(
+            503,
             "Product Service is currently unavailable. Please try again later."
           );
         }
@@ -103,9 +106,9 @@ export const createOrder = async (req, res) => {
         shippingAddress: order.shippingAddress,
       });
 
-      console.log(`Order created event published for order: ${order._id}`);
+      logger.info(`Order created event published for order: ${order._id}`);
     } catch (error) {
-      console.error("Failed to publish order.created event:", error);
+      logger.error("Failed to publish order.created event:", error);
     }
     res.status(201).json({
       order: {
