@@ -33,7 +33,7 @@ export const registerUser = async (req, res) => {
       username,
       email,
       password,
-      role
+  
     });
 
     logger.warn("User saved successfully", user._id);
