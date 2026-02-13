@@ -8,7 +8,7 @@ const generateToken = async(user) => {
         username: user.username,
         role: user.role
     },
-    process.env.ACCESS_TOKEN_SECRET,
+    process.env.JWT_SECRET,
     {
         expiresIn: process.env.ACCESS_TOKEN_EXPIRATION
     })
