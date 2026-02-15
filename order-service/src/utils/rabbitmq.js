@@ -38,7 +38,7 @@ try {
       if (!channel) {
         await connect();
       }
-      await publishEvent(
+      channel.publish(
         EXCHANGE_NAME,
         routingKey,
         Buffer.from(JSON.stringify(message))

@@ -4,10 +4,10 @@ import rabbitmq from "../utils/rabbitmq.js";
 
 const setUpPaymentListener = async () => {
   await rabbitmq.subscribeEvent("payment.initiated", async (message) => {
-    const { orderId, paymentId, clientSecret, paymentIntentId } = message;
+    const { orderId, paymentId, paymentIntentId } = message;
 
     try {
-      if (!orderId || !paymentId || !clientSecret) {
+      if (!orderId || !paymentId) {
         logger.warn("Invalid payment initialization", message);
         return;
       }
@@ -25,7 +25,7 @@ const setUpPaymentListener = async () => {
       }
 
       order.paymentId = paymentId;
-      order.clientSecret = clientSecret;
+      // order.clientSecret = clientSecret;
       order.paymentIntentId = paymentIntentId;
       order.paymentStatus = "pending";
 

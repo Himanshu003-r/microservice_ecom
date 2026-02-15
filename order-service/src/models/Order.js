@@ -57,7 +57,7 @@ const OrderSchema = new mongoose.Schema(
     // Payment fields
     paymentId: String,
     paymentIntentId: String,
-    clientSecret: String,
+    // clientSecret: String,
     transactionId: String,
     
     paymentStatus: {
