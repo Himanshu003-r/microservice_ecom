@@ -110,7 +110,6 @@ app.use(
 app.use(
   "/v1/product",
    authMiddleware,
-  //  requireAuth,
   proxy(process.env.PRODUCT_SERVICE, {
     ...proxyOptions,
     proxyReqOptDecorator: (proxyReqOpts,srcReq) => {
