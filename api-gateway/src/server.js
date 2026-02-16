@@ -75,11 +75,64 @@ app.use(
     },
   })
 );
-
+// Middleware to ensure user exists
+const requireAuth = (req, res, next) => {
+    if (!req.user || !req.user.userId) {
+        logger.error('Authentication required but user not found in request');
+        return res.status(401).json({ 
+            success: false, 
+            error: 'Authentication required' 
+        });
+    }
+    next();
+};
 app.use(
   "/v1/order",
    authMiddleware,
+   requireAuth,
   proxy(process.env.ORDER_SERVICE, {
+    ...proxyOptions,
+    proxyReqOptDecorator: (proxyReqOpts,srcReq) => {
+      proxyReqOpts.headers["Content-Type"] = "application/json";
+      proxyReqOpts.headers["x-user-id"] = srcReq.user.userId
+      proxyReqOpts.headers["x-user-role"] = srcReq.user.role
+      return proxyReqOpts
+    },
+      userResDecorator: (proxyRes, proxyResData) => {
+      logger.info(
+        `Response received from Identity service: ${proxyRes.statusCode}`
+      );
+      return proxyResData;
+    },
+  })
+)
+
+app.use(
+  "/v1/product",
+   authMiddleware,
+  //  requireAuth,
+  proxy(process.env.PRODUCT_SERVICE, {
+    ...proxyOptions,
+    proxyReqOptDecorator: (proxyReqOpts,srcReq) => {
+      proxyReqOpts.headers["Content-Type"] = "application/json";
+      proxyReqOpts.headers["x-user-id"] = srcReq.user?.userId || "";
+      proxyReqOpts.headers["x-user-role"] = srcReq.user?.role || "";
+      return proxyReqOpts
+    },
+      userResDecorator: (proxyRes, proxyResData) => {
+      logger.info(
+        `Response received from Identity service: ${proxyRes.statusCode}`
+      );
+      return proxyResData;
+    },
+  })
+)
+
+app.use(
+  "/v1/payment",
+   authMiddleware,
+   requireAuth,
+  proxy(process.env.PAYMENT_SERVICE, {
     ...proxyOptions,
     proxyReqOptDecorator: (proxyReqOpts,srcReq) => {
       proxyReqOpts.headers["Content-Type"] = "application/json";
@@ -102,4 +155,6 @@ app.listen(PORT, ()=> {
     logger.info(`api-gateway running on port ${PORT}`)
     logger.info(`user service running on port ${process.env.USER_SERVICE}`)
     logger.info(`order service running on port ${process.env.ORDER_SERVICE}`)
+    logger.info(`payment service running on port ${process.env.PAYMENT_SERVICE}`)
+    logger.info(`product service running on port ${process.env.PRODUCT_SERVICE}`)
 })
