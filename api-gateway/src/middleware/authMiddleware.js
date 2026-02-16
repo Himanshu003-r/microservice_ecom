@@ -1,25 +1,29 @@
-import ApiError from "../errors/customAPIError.js"
-import logger from "../utils/logger.js"
-import jwt from 'jsonwebtoken'
-const authMiddleware = async (req,res,next) => {
-    try {
-        const authHeader = req.headers['authorization']
-        const token = authHeader || authHeader.split(" ")[1]
+import logger from "../utils/logger.js";
+import jwt from "jsonwebtoken";
+const validateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
 
-        if(!token){
-            logger.warn('Unauthorized access')
-            throw new ApiError(401, 'Unauthorized access')
-        }
+  if (!token) {
+    logger.warn("Access attempt without valid token");
+    return res.status(401).json({
+      success: false,
+      message: "Authentication required",
+    });
+  }
 
-       const user = jwt.verify(token, process.env.JWT_SECRET)
-       req.user = user
-    } catch (error) {
-        logger.error('Error in authentication')
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error'
-        })
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      logger.warn("Invalid token");
+      return res.status(403).json({
+        success: false,
+        message: "Invalid token",
+      });
     }
-}
+    req.user = user;
+    next();
+  });
+};
 
-export default authMiddleware
+
+export default validateToken
