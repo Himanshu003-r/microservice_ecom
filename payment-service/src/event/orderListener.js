@@ -5,42 +5,11 @@ import stripe from "../utils/stripe.js";
 
 const setUpOrderListener = async () => {
   await rabbitmq.subscribeEvent("order.created", async (message) => {
-    const { orderId, userId, total, currency } = message;
-
+    const { orderId} = message;
     try {
-      const existingPayment = await Payment.findById({ orderId });
-      if (existingPayment) {
-        logger.info("Payment already exists for order:", orderId);
-        return;
-      }
-
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(total * 100), // converted to paisa
-        currency: currency || "inr",
-        metadata: { orderId, userId },
-      });
-
-      const payment = await Payment.create({
-        orderId,
-        userId,
-        amount: total,
-        currency: currency || "inr",
-        paymentIntentId: paymentIntent.id,
-        clientSecret: paymentIntent.client_secret,
-        status: "pending",
-      });
-
-      logger.info("Payment created", payment._id);
-
-      await rabbitmq.publishEvent("payment.initiated", {
-        orderId,
-        paymentId: payment._id.toString(),
-        paymentIntent: paymentIntent.id,
-        clientSecret: paymentIntent.client_secret,
-      });
+      logger.info(`Order created event received for order: ${orderId}`);
     } catch (error) {
-      logger.error("Error processing in payment", error);
-      throw error;
+      logger.error("Error processing order.created event:", error);
     }
   });
 
@@ -48,7 +17,7 @@ const setUpOrderListener = async () => {
     const { orderId } = message;
 
     try {
-      const payment = await Payment.findById({ orderId });
+      const payment = await Payment.findOne({ orderId: orderId });
 
       if (!payment) {
         logger.info(`Payment does not exist for order: ${orderId}`);
@@ -77,7 +46,6 @@ const setUpOrderListener = async () => {
       });
     } catch (error) {
       logger.error("Error processing in refund", error);
-      throw error;
     }
   });
 };
