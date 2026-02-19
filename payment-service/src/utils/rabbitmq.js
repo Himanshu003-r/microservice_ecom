@@ -38,7 +38,7 @@ try {
       if (!channel) {
         await connect();
       }
-      await publishEvent(
+      channel.publish(
         EXCHANGE_NAME,
         routingKey,
         Buffer.from(JSON.stringify(message))
@@ -46,7 +46,6 @@ try {
       logger.info(`Event published: ${routingKey}`);
 } catch (error) {
     logger.error('Failed to publish message:', error);
-    throw error;
 }
 }
 
@@ -77,7 +76,6 @@ try {
       });
 } catch (error) {
     logger.error('Failed to subscribe:', error);
-    throw error;
 }
 }
 
@@ -87,7 +85,7 @@ async function close() {
     await connection?.close();
     console.log('RabbitMQ connection closed');
   } catch (error) {
-    console.error('*Error closing connection:', error);
+    console.error('Error closing connection:', error);
   }
 }
 
