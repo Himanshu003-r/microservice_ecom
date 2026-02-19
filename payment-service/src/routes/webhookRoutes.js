@@ -1,8 +1,9 @@
-import express from "express";
+import express from 'express'
+import {Router} from 'express'
 import { webhooks } from "../controllers/paymentController.js";
 
-const router = express.Router();
+const router = Router()
 
-router.post("/stipe", express.raw({ type: 'application/json' }), webhooks);
+router.post("/stripe", express.raw({ type: 'application/json' }), webhooks);
 
 export default router;
