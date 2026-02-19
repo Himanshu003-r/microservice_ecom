@@ -1,78 +1,60 @@
 import mongoose from "mongoose";
 
-const PaymentSchema = new mongoose.Schema(
-  {
-    orderId: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    userId: {
-      type: String,
-      required: true,
-    },
-    amount: {
-      type: String,
-      required: true,
-      min: 0,
-    },
-    currency: {
-      type: String,
-      default: "inr",
-      uppercase: true,
-    },
-
-    // Stripe Details
-
-    paymentIntentId: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-
-    clientSecret: {
-      type: String,
-      required: true,
-    },
-
-    transactionId: {
-      type: String,
-      unique: true,
-      sparse: true, // Allows multiple null values
-    },
-
-    // Payment Status
-    status: {
-      type: String,
-      enum: ["pending", "succeeded", "failed", "refunded"],
-      default: "pending",
-    },
-
-    paymentMethod: {
-      type: String, // 'card', 'upi', etc.
-      last4: String, // Last 4 digits
-      brand: String, // 'visa', 'mastercard'
-    },
-
-    refundId: String,
-    refundAmount: Number,
-    refundReason: String,
-
-    failureCode: String,
-    failureMessage: String,
-
-    succeededAt: Date,
-    failedAt: Date,
-    refundedAt: Date,
+const PaymentSchema = new mongoose.Schema({
+  orderId: {
+    type: String,
+    required: true,
+    index: true,
   },
-  {
-    timestamps: true,
-  }
-);
+  userId: {
+    type: String,
+    required: true,
+    index: true,
+  },
+  amount: {
+    type: Number,
+    required: true,
+  },
+  currency: {
+    type: String,
+    required: true,
+    default: 'inr',
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'processing', 'succeeded', 'failed', 'cancelled'],
+    default: 'pending',
+  },
+  paymentIntentId: {
+    type: String,
+    sparse: true,
+  },
+  checkoutSessionId: {
+    type: String,
+    index: true,
+  },
+  transactionId: {
+    type: String,
+  },
+  paymentMethod: {
+    type: {
+      type: String,
+    },
+    last4: String,
+    brand: String,
+  },
+  failureCode: String,
+  failureMessage: String,
+  succeededAt: Date,
+  failedAt: Date,
+}, {
+  timestamps: true,
+});
 
-PaymentSchema.index({ orderId: 1 });
-PaymentSchema.index({ userId: 1 });
+
 PaymentSchema.index({ status: 1 });
 
 const Payment = mongoose.model("Payment", PaymentSchema);
 export default Payment;
+
+
