@@ -5,15 +5,12 @@ import logger from "./utils/logger.js";
 import errorHandler from "./middleware/errorHandler.js";
 import helmet from "helmet";
 import cors from "cors";
-// import orderRoute from "./routes/paymentRoute.js";
+import paymentRoute from "./routes/paymentRoute.js";
+import checkoutRoutes from "./routes/checkoutRoutes.js"
 import webhookRoutes from './routes/webhookRoutes.js'
-import { RateLimiterRedis } from "rate-limiter-flexible";
-import { rateLimit } from "express-rate-limit";
-import { RedisStore } from "rate-limit-redis";
 import { connect } from "./utils/rabbitmq.js";
 import Redis from "ioredis";
-import ApiError from "./errors/customAPIError.js";
-import setUpOrderListener from "./event/paymentListener.js";
+import setUpOrderListener from "./event/orderListener.js";
 dotenv.config();
 
 const app = express();
@@ -23,7 +20,7 @@ connectDB();
 
 app.use(helmet());
 app.use(cors());
-app.use('/api/v1/webhooks', webhookRoutes);
+app.use('/api/webhook', webhookRoutes);
 app.use(express.json());
 app.use(express.urlencoded());
 app.use((req, res, next) => {
@@ -32,48 +29,8 @@ app.use((req, res, next) => {
   next();
 });
 
-//DDOS proc and rate limiting
-const rateLimiter = new RateLimiterRedis({
-  storeClient: redisClient,
-  keyPrefix: "middleware",
-  points: 10, // max no. of requests
-  duration: 1, // in sec
-});
-
-app.use((req, res, next) => {
-  rateLimiter
-    .consume(req.ip)
-    .then(() => next())
-    .catch(() => {
-      logger.warn(`Rate limit exceeded for IP: ${req.ip}`);
-      res.status(429).json({
-        success: false,
-        message: "Too many requests",
-      });
-    });
-});
-
-//IP based rate limiting for sensitive endpoints
-const WINDOW_MS = 15 * 60 * 1000; // 15 mins
-const sensitiveEndpoints = rateLimit({
-  windowMs: WINDOW_MS,
-  max: 7,
-  standardHeaders: true, // allowing headers in response
-  legacyHeaders: false,
-  handler: (req, res) => {
-    const windowMinutes = Math.floor(WINDOW_MS / 60000);
-    logger.warn(`Sensitive endpoint rate limit exceeded for IP: ${req.ip}`);
-    throw new ApiError(
-      429,
-      `Too many requests, try again after ${windowMinutes} minutes `
-    );
-  },
-  store: new RedisStore({
-    sendCommand: (...args) => redisClient.call(...args),
-  }),
-});
-
-// app.use("/api/order", orderRoute);
+app.use("/api/payment", paymentRoute);
+app.use("/api/checkout",checkoutRoutes)
 
 app.get("/health", (req, res) => {
   res.json({
