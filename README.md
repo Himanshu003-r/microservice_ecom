@@ -16,8 +16,5 @@ This e-commerce platform uses a microservices architecture with:
 - **Payment**: Stripe API
 - **Containerization**: Docker
 
-### Key Learnings
-- Designing microservice communication patterns
-- Handling distributed transactions and eventual consistency
-- Webhook handling and idempotency
-- Debugging production issues in distributed systems
+### Workflow
+- All api passes through `Api gateway` with headers enabling authentication and authorization
