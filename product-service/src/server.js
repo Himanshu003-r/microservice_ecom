@@ -9,7 +9,7 @@ import productRoute from "./routes/productRoute.js";
 import { RateLimiterRedis } from "rate-limiter-flexible";
 import { rateLimit } from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
-import { connect } from "./utils/rabbitmq.js";
+// import { connect } from "./utils/rabbitmq.js";
 import Redis from "ioredis";
 import ApiError from "./errors/customAPIError.js";
 dotenv.config();
@@ -70,9 +70,14 @@ app.use((req, res, next) => {
 //   }),
 // });
 
-//apply the sensitive rate limiter to routes
-
-app.use("/api/product", productRoute);
+app.use(
+  "/api/product",
+  (req, res, next) => {
+    req.redisClient = redisClient;
+    next();
+  },
+  productRoute
+);
 
 // Health check
 app.get("/health", (req, res) => {
@@ -87,7 +92,7 @@ app.use(errorHandler);
 
 async function startServer() {
   try {
-    await connect();
+    // await connect();
     app.listen(PORT, () => {
       logger.info(`Product service running on port ${PORT}`);
     });
