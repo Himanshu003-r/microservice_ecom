@@ -3,7 +3,7 @@ import ApiError from "../errors/customAPIError.js";
 import logger from "../utils/logger.js";
 
 export const getAllProducts = async (req, res) => {
-  logger.info("Create product endpoint hit");
+  logger.info("Get all product endpoint hit");
   try {
     const {
       category,
@@ -36,22 +36,36 @@ export const getAllProducts = async (req, res) => {
       filter.$text = { $search: search };
     }
 
+   const cacheKey = `product:${JSON.stringify(req.query)}`
+    const cachedProducts = await req.redisClient.get(cacheKey)
+
+    if(cachedProducts){
+      return res.json(JSON.parse(cachedProducts))
+    }
+
     const products = await Product.find(filter)
       .sort(sort)
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit));
 
     const total = await Product.countDocuments(filter);
-
-    res.status(201).json({
-      success: true,
+   
+     const result = {
       products,
       count: products.length,
-      total,
-      page: Number(page),
-      pages: Math.ceil(total / Number(limit)),
-    });
+      totalProducts: total,
+      currentPage: Number(page),
+      TotalPages: Math.ceil(total / Number(limit)),
+     }
+    //save in redis cache
+    await req.redisClient.setex(cacheKey,300, JSON.stringify(result))   // duration in secs
+//     await req.redisClient.set(cacheKey, JSON.stringify(result), {
+//   EX: 300,
+// });
+
+    res.status(201).json(result);
   } catch (error) {
+      console.error("FULL ERROR:", error);
     logger.error("An error occured while fetching all product");
     if (error instanceof ApiError) {
       return res.status(error.statusCode || 400).json({
