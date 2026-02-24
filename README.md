@@ -374,10 +374,12 @@ ecommerce-microservices/
 ├── api-gateway/
 │   ├── src/
 │   │   ├── errors
-│   │   │    ├── customApiError.js
+│   │   │   └── customApiError.js
 │   │   ├── middleware/
 │   │   │   ├── authMiddleware.js
 │   │   │   └── errorHandler.js
+│   │   ├── utils/
+│   │   │   └── logger.js
 │   │   └── server.js
 │   ├── .env
 │   └── package.json
@@ -385,77 +387,104 @@ ecommerce-microservices/
 ├── user-service/
 │   ├── src/
 │   │   ├── controllers/
-│   │   │   └── authController.js
+│   │   │   └── userAuth.js
+│   │   ├── db/
+│   │   │   └── dbConnect.js
+│   │   ├── errors/
+│   │   │   └── customApiError.js
+│   │   ├── middleware/
+│   │   │   └── errorHandler.js
 │   │   ├── models/
-│   │   │   ├── User.js
-│   │   │   └── RefreshToken.js
+│   │   │   ├── RefreshToken.js
+│   │   │   └── User.js
 │   │   ├── routes/
-│   │   │   └── authRoutes.js
+│   │   │   └── authRoute.js
 │   │   ├── utils/
-│   │   │   └── generateToken.js
+│   │   │   ├── generateToken.js
+│   │   │   ├── logger.js
+│   │   │   └── validation.js
 │   │   └── server.js
+│   ├── .env
 │   └── package.json
 │
 ├── product-service/
 │   ├── src/
 │   │   ├── controllers/
 │   │   │   └── productController.js
+│   │   ├── db/
+│   │   │   └── dbConnect.js
+│   │   ├── errors/
+│   │   │   └── customApiError.js
+│   │   ├── middleware/
+│   │   │   ├── authorization.js
+│   │   │   ├── errorHandler.js
+│   │   │   └── verifyGateway.js
 │   │   ├── models/
 │   │   │   └── Product.js
 │   │   ├── routes/
-│   │   │   └── productRoutes.js
+│   │   │   └── productRoute.js
 │   │   ├── listeners/
 │   │   │   └── orderListener.js
 │   │   ├── utils/
-│   │   │   └── rabbitmq.js
-│   │   ├── seed.js
+│   │   │   └── logger.js
 │   │   └── server.js
+│   ├── .env
 │   └── package.json
 │
 ├── order-service/
 │   ├── src/
 │   │   ├── controllers/
 │   │   │   └── orderController.js
+│   │   ├── db/
+│   │   │   └── dbConnect.js
+│   │   ├── errors/
+│   │   │   └── customApiError.js
+│   │   ├── events/
+│   │   │   └── paymentListener.js
+│   │   ├── middleware/
+│   │   │   ├── authMiddleware.js
+│   │   │   ├── authorization.js
+│   │   │   └── errorHandler.js
 │   │   ├── models/
 │   │   │   └── Order.js
 │   │   ├── routes/
-│   │   │   └── orderRoutes.js
-│   │   ├── listeners/
-│   │   │   └── paymentListener.js
+│   │   │   └── orderRoute.js
 │   │   ├── utils/
-│   │   │   ├── rabbitmq.js
-│   │   │   └── checkPermissions.js
+│   │   │   ├── checkPermissions.js
+│   │   │   ├── logger.js
+│   │   │   └── rabbitmq.js
 │   │   └── server.js
+│   ├── .env
 │   └── package.json
 │
 ├── payment-service/
 │   ├── src/
 │   │   ├── controllers/
 │   │   │   └── paymentController.js
+│   │   ├── db/
+│   │   │   └── dbConnect.js
+│   │   ├── errors/
+│   │   │   └── customApiError.js
+│   │   ├── events/
+│   │   │   └── orderListener.js
+│   │   ├── middleware/
+│   │   │   ├── authorization.js
+│   │   │   ├── errorHandler.js
+│   │   │   └── verifyGateway.js
 │   │   ├── models/
 │   │   │   └── Payment.js
 │   │   ├── routes/
-│   │   │   ├── webhookRoutes.js
-│   │   │   └── paymentRoutes.js
-│   │   ├── listeners/
-│   │   │   └── orderListener.js
+│   │   │   ├── checkoutRoute.js
+│   │   │   ├── paymentRoute.js
+│   │   │   └── webhookRoute.js
 │   │   ├── utils/
+│   │   │   ├── logger.js
 │   │   │   ├── rabbitmq.js
 │   │   │   └── stripe.js
 │   │   └── server.js
+│   ├── .env
 │   └── package.json
-│
-├── review-service/
-│   ├── src/
-│   │   ├── controllers/
-│   │   │   └── reviewController.js
-│   │   ├── models/
-│   │   │   └── Review.js
-│   │   ├── routes/
-│   │   │   └── reviewRoutes.js
-│   │   └── server.js
-│   └── package.json
-│
+├── .gitignore
 ├── docker-compose.yml
 └── README.md
 ```
