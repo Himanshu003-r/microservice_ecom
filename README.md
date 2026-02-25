@@ -1,6 +1,7 @@
 # E-Commerce Microservices Platform 🛒
 
 A scalable, event-driven e-commerce backend built with microservices architecture using Node.js, MongoDB, RabbitMQ, and Stripe.
+This project handles the flow of order and payment integration
 
 ## Table of Contents
 
@@ -8,11 +9,10 @@ A scalable, event-driven e-commerce backend built with microservices architectur
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Services](#services)
-- [Getting Started](#getting-started)
 - [API Documentation](#api-documentation)
 - [Event Flow](#event-flow)
 - [Project Structure](#project-structure)
-- [Environment Variables](#environment-variables)
+- [Testing](#testing)
 
 ---
 
@@ -467,7 +467,7 @@ ecommerce-microservices/
 └── README.md
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Manual Testing with Postman
 
