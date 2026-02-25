@@ -2,7 +2,7 @@
 
 A scalable, event-driven e-commerce backend built with microservices architecture using Node.js, MongoDB, RabbitMQ, and Stripe.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Architecture Overview](#architecture-overview)
 - [Features](#features)
@@ -16,7 +16,7 @@ A scalable, event-driven e-commerce backend built with microservices architectur
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 ```
 ┌───────────────────────────────────────────────────┐
 │             CLIENT APPLICATIONS                   │
@@ -78,13 +78,12 @@ A scalable, event-driven e-commerce backend built with microservices architectur
 
 ---
 
-## ✨ Features
+## Features
 
 ### Core Functionality
 -  User authentication and authorization (JWT)
 -  Product catalog with search and filtering
 -  Shopping cart management
--  Order processing and tracking
 -  Secure payment processing via Stripe
 
 ### Technical Features
@@ -95,11 +94,10 @@ A scalable, event-driven e-commerce backend built with microservices architectur
 -  API Gateway with authentication
 -  Graceful shutdown handling
 -  Error handling and retry mechanisms
--  Idempotent operations
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **Runtime:** Node.js v18+
@@ -117,7 +115,7 @@ A scalable, event-driven e-commerce backend built with microservices architectur
 
 ---
 
-## 🏢 Services
+## Services
 
 ### 1. **API Gateway** (Port 4000)
 - Routes requests to appropriate microservices
@@ -127,11 +125,11 @@ A scalable, event-driven e-commerce backend built with microservices architectur
 
 **Key Endpoints:**
 ```
-/api/v1/auth/*      → User Service
-/api/v1/users/*     → User Service
-/api/v1/products/*  → Product Service
-/api/v1/orders/*    → Order Service
-/api/v1/payments/*  → Payment Service
+v1/auth/*      → User Service
+v1/users/*     → User Service
+v1/products/*  → Product Service
+v1/orders/*    → Order Service
+v1/payments/*  → Payment Service
 
 ```
 
@@ -146,11 +144,10 @@ Manages user accounts, authentication, and profiles.
 
 **Key Endpoints:**
 ```
-POST   /api/v1/auth/register
-POST   /api/v1/auth/login
-POST   /api/v1/auth/logout
-GET    /api/v1/users/profile
-PUT    /api/v1/users/profile
+POST   v1/auth/register
+POST   v1/auth/login
+POST   v1/auth/logout
+
 ```
 
 ### 3. **Order Service** (Port 4002)
@@ -165,42 +162,42 @@ Manages order lifecycle and processing.
 
 **Key Endpoints:**
 ```
-POST   /api/v1/orders                (Create order)
-GET    /api/v1/orders/my-orders      (User's orders)
-GET    /api/v1/orders/:id            (Single order)
-PATCH  /api/v1/orders/:id/cancel     (Cancel order)
-GET    /api/v1/orders                (All orders - Admin)
+POST   v1/orders                (Create order)
+GET    v1/orders/stats          (User's orders statitics - Admin)
+GET    v1/orders/:id            (Single order)
+PATCH  v1/orders/:id/cancel     (Cancel order)
+GET    v1/orders                (All orders - Admin)
 ```
 
 **Event Flow:**
 ```
 1. Publishes: order.created
 2. Listens to: payment.initiated, payment.completed, payment.failed
-3. Publishes: order.confirmed, order.cancelled
+
 ```
 
 ### 4. **Payment Service** (Port 4003)
 Handles payment processing via Stripe.
 
 **Features:**
-- Stripe payment intent creation
+- Stripe payment checkout creation
 - Payment status tracking
-- Refund processing
+- Checkout session
 - Webhook handling for real-time updates
 - Payment history
 
 **Key Endpoints:**
 ```
-POST   /api/v1/webhooks/stripe           (Stripe webhooks)
-GET    /api/v1/payments/order/:orderId   (Payment by order)
-GET    /api/v1/payments/:id              (Payment by ID)
-GET    /api/v1/payments/user/history     (User's payments)
+POST   /api/webhooks/stripe           (Stripe webhooks)
+GET    /v1/payments/order/:orderId    (Payment by order)
+GET    /v1/payments/:id               (Payment by ID)
+POST    /v1/checkout/create-session    (Stripe checkout for payment)
 ```
 
 **Event Flow:**
 ```
 1. Listens to: order.created, order.cancelled
-2. Publishes: payment.initiated, payment.completed, payment.failed, payment.refunded
+2. Publishes: payment.initiated, payment.completed, payment.failed
 ```
 
 ### 5. **Product Service** (Port 4004)
@@ -221,15 +218,15 @@ PUT    /api/v1/products/:id          (Update - Admin)
 DELETE /api/v1/products/:id          (Delete - Admin)
 ```
 
-## 📚 API Documentation
+## API Documentation
 
 ### Base URLs
 ```
-API Gateway: http://localhost:8000
-User Service: http://localhost:8001
-Product Service: http://localhost:8002
-Order Service: http://localhost:8003
-Payment Service: http://localhost:8004
+API Gateway: http://localhost:4000
+User Service: http://localhost:4001
+Order Service: http://localhost:4002
+Payment Service: http://localhost:4003
+Product Service: http://localhost:4004
 
 ```
 
@@ -237,14 +234,14 @@ Payment Service: http://localhost:8004
 
 All protected routes require a JWT token in the Authorization header:
 ```bash
-Authorization: Bearer <your_jwt_token>
+Authorization: Bearer <jwt_token>
 ```
 
 ### Sample API Calls
 
 #### 1. Register User
 ```bash
-curl -X POST http://localhost:8000/api/v1/auth/register \
+curl -X POST http://localhost:4000/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "John Doe",
@@ -255,7 +252,7 @@ curl -X POST http://localhost:8000/api/v1/auth/register \
 
 #### 2. Login
 ```bash
-curl -X POST http://localhost:8000/api/v1/auth/login \
+curl -X POST http://localhost:400/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@example.com",
@@ -265,17 +262,12 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
 
 #### 3. Get All Products
 ```bash
-curl http://localhost:8000/api/v1/products
+curl http://localhost:4000/v1/products
 ```
 
-#### 4. Search Products
+#### 4. Create Order
 ```bash
-curl "http://localhost:8000/api/v1/products?search=iphone&category=Electronics&minPrice=500"
-```
-
-#### 5. Create Order
-```bash
-curl -X POST http://localhost:8000/api/v1/orders \
+curl -X POST http://localhost:4000/api/v1/orders \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -297,32 +289,32 @@ curl -X POST http://localhost:8000/api/v1/orders \
   }'
 ```
 
-#### 6. Get My Orders
+#### 5. Get My Orders
 ```bash
-curl http://localhost:8000/api/v1/orders/my-orders \
+curl http://localhost:4000/v1/orders/my-orders \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 ---
 
-## 🔄 Event Flow
+## Event Flow
 
 ### Complete Order-to-Payment Flow
 ```
 1. USER PLACES ORDER
    ↓
-2. Order Service: POST /api/v1/orders
+2. Order Service: POST /v1/orders
    - Creates order (status: pending)
    - Publishes: order.created
    ↓
 3. Payment Service Listener
    - Receives: order.created
-   - Creates Stripe payment intent
+   - Creates Stripe payment checkout
    - Publishes: payment.initiated
    ↓
 4. Order Service Listener
    - Receives: payment.initiated
-   - Updates order with clientSecret
+   - Updates order with session
    ↓
 5. USER PAYS ON FRONTEND
    - Stripe processes payment
@@ -336,14 +328,7 @@ curl http://localhost:8000/api/v1/orders/my-orders \
    - Receives: payment.completed
    - Updates order (status: confirmed)
    - Publishes: order.confirmed
-   ↓
-8. Product Service Listener
-   - Receives: order.confirmed
-   - Reduces inventory
-   ↓
-9. Review Service Listener (Future)
-   - Receives: order.delivered
-   - Sends review request
+
 ```
 
 ### Event Types
@@ -352,22 +337,15 @@ curl http://localhost:8000/api/v1/orders/my-orders \
 - `order.created` - New order placed
 - `order.confirmed` - Payment successful
 - `order.cancelled` - Order cancelled by user
-- `order.shipped` - Order dispatched
-- `order.delivered` - Order delivered
 
 **Payment Events:**
 - `payment.initiated` - Payment intent created
 - `payment.completed` - Payment successful
 - `payment.failed` - Payment failed
-- `payment.refunded` - Payment refunded
-
-**Product Events:**
-- `product.inventory.low` - Low stock alert
-- `product.out_of_stock` - Out of stock
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 ```
 ecommerce-microservices/
 │
@@ -493,14 +471,13 @@ ecommerce-microservices/
 
 ### Manual Testing with Postman
 
-1. Import the Postman collection (if provided)
-2. Set environment variables (base_url, jwt_token)
-3. Test each endpoint
+1. Set environment variables (base_url, jwt_token)
+2. Test each endpoint
 
 ### Testing Stripe Webhooks
 ```bash
 # Start Stripe CLI
-stripe listen --forward-to localhost:8004/api/v1/webhooks/stripe
+stripe listen --forward-to localhost:4004/api/v1/webhooks/stripe
 
 # Trigger test event
 stripe trigger payment_intent.succeeded
@@ -510,21 +487,8 @@ stripe trigger payment_intent.succeeded
 ```
 Success: 4242 4242 4242 4242
 Decline: 4000 0000 0000 0002
-Insufficient funds: 4000 0000 0000 9995
+
 ```
-
----
-
-
-## 📈 Performance Optimizations
-
-- Database indexing for faster queries
-- Connection pooling for MongoDB
-- RabbitMQ message persistence
-- Pagination for large datasets
-- Caching frequently accessed data
-- Graceful shutdown handling
-- Health check endpoints
 
 ---
 
