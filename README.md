@@ -107,8 +107,8 @@ This project handles the flow of order and payment integration
 - **Payment Gateway:** Stripe
 - **Authentication:** JWT (JSON Web Tokens)
 
-### DevOps & Tools
-- **Containerization:** Docker & Docker Compose
+### Tools
+
 - **Version Control:** Git
 - **Testing:** Postman, Stripe CLI
 - **Environment Management:** dotenv
@@ -463,7 +463,6 @@ ecommerce-microservices/
 │   ├── .env
 │   └── package.json
 ├── .gitignore
-├── docker-compose.yml
 └── README.md
 ```
 
