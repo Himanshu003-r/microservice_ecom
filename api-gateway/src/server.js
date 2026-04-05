@@ -148,6 +148,15 @@ app.use(
   })
 )
 
+// Health check
+app.get("/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+
 app.use(errorHandler)
 
 app.listen(PORT, ()=> {
